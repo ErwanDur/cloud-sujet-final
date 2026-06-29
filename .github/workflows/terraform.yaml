@@ -61,6 +61,7 @@ jobs:
           aws-region: eu-west-3
           role-to-assume: arn:aws:iam::738563260931:role/role_etudiants
           role-session-name: github-actions-terraform
+          role-skip-session-tagging: true
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -112,6 +113,7 @@ jobs:
           aws-region: eu-west-3
           role-to-assume: arn:aws:iam::738563260931:role/role_etudiants
           role-session-name: github-actions-ansible
+          role-skip-session-tagging: true
 
       - name: install ansible + collection
         run: |
