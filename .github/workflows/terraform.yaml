@@ -69,7 +69,8 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Package Lambda handler
-        run: cd lambda && zip ../terraform/handler.zip handler.py
+        working-directory: ${{ github.workspace }}
+        run: zip -j terraform/handler.zip lambda/handler.py
 
       - name: fmt
         run: terraform fmt -check -recursive
