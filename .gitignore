@@ -22,6 +22,7 @@ __pycache__/
 lambda/layers/python/
 /tmp/handler.zip
 terraform/handler.zip
+terraform/pillow.zip
 
 # Nix
 .direnv/

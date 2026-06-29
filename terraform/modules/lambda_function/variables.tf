@@ -20,7 +20,7 @@ variable "destination_bucket_arn" {
 
 variable "pillow_layer_path" {
   type    = string
-  default = "../lambda/layers/pillow.zip"
+  default = "./pillow.zip"
 }
 
 variable "handler_zip_path" {
