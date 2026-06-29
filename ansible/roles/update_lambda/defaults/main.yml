@@ -1,0 +1,4 @@
+---
+lambda_function_name: "ynov-image-converter"
+lambda_region: "eu-west-3"
+lambda_handler_dir: "{{ playbook_dir }}/../lambda"

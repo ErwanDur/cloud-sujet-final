@@ -1,0 +1,7 @@
+---
+- name: Deploy Lambda handler
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - update_lambda
