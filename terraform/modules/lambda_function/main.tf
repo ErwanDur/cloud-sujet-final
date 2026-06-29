@@ -1,0 +1,87 @@
+data "aws_iam_policy_document" "assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "lambda" {
+  name               = "${var.function_name}-role"
+  assume_role_policy = data.aws_iam_policy_document.assume.json
+  tags               = var.tags
+}
+
+data "aws_iam_policy_document" "s3_access" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${var.source_bucket_arn}/*"]
+  }
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = ["${var.destination_bucket_arn}/*"]
+  }
+  statement {
+    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+}
+
+resource "aws_iam_role_policy" "s3_access" {
+  name   = "${var.function_name}-s3"
+  role   = aws_iam_role.lambda.id
+  policy = data.aws_iam_policy_document.s3_access.json
+}
+
+resource "aws_lambda_layer_version" "pillow" {
+  filename                 = var.pillow_layer_path
+  layer_name               = "${var.function_name}-pillow"
+  compatible_runtimes      = ["python3.11"]
+  compatible_architectures = ["x86_64"]
+  source_code_hash         = filebase64sha256(var.pillow_layer_path)
+}
+
+data "archive_file" "handler" {
+  type        = "zip"
+  source_file = "${var.handler_source_dir}/handler.py"
+  output_path = "${path.module}/handler.zip"
+}
+
+resource "aws_lambda_function" "this" {
+  filename         = data.archive_file.handler.output_path
+  function_name    = var.function_name
+  role             = aws_iam_role.lambda.arn
+  handler          = "handler.lambda_handler"
+  runtime          = "python3.11"
+  architectures    = ["x86_64"]
+  source_code_hash = data.archive_file.handler.output_base64sha256
+  layers           = [aws_lambda_layer_version.pillow.arn]
+  tags             = var.tags
+
+  environment {
+    variables = {
+      DEST_BUCKET = var.destination_bucket_id
+    }
+  }
+}
+
+resource "aws_lambda_permission" "s3" {
+  statement_id  = "AllowS3Invoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.this.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = var.source_bucket_arn
+}
+
+resource "aws_s3_bucket_notification" "source" {
+  bucket = var.source_bucket_id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.this.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.s3]
+}

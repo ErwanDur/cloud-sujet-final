@@ -1,0 +1,3 @@
+aws_region     = "eu-west-3"
+role_arn       = "arn:aws:iam::738563260931:role/role_etudiants"
+project_prefix = "ynov"
