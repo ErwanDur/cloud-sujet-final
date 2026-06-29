@@ -5,6 +5,7 @@ on:
     branches: ["**"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
 
 jobs:
   changes:
@@ -64,6 +65,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "~> 1.6"
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: fmt
         run: terraform fmt -check -recursive
@@ -93,7 +95,7 @@ jobs:
         run: infracost breakdown --path .
 
       - name: apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         run: terraform apply -auto-approve tfplan
 
   ansible:
@@ -120,5 +122,5 @@ jobs:
         run: ansible-lint ansible/playbook.yml
 
       - name: deploy
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         run: ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
