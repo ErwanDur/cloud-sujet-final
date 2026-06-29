@@ -21,6 +21,7 @@ __pycache__/
 # Lambda build artifacts
 lambda/layers/python/
 /tmp/handler.zip
+terraform/handler.zip
 
 # Nix
 .direnv/

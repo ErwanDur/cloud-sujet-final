@@ -23,9 +23,9 @@ variable "pillow_layer_path" {
   default = "../lambda/layers/pillow.zip"
 }
 
-variable "handler_source_dir" {
+variable "handler_zip_path" {
   type    = string
-  default = "../lambda"
+  default = "./handler.zip"
 }
 
 variable "tags" {

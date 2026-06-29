@@ -43,20 +43,14 @@ resource "aws_lambda_layer_version" "pillow" {
   source_code_hash         = filebase64sha256(var.pillow_layer_path)
 }
 
-data "archive_file" "handler" {
-  type        = "zip"
-  source_file = "${var.handler_source_dir}/handler.py"
-  output_path = "${path.module}/handler.zip"
-}
-
 resource "aws_lambda_function" "this" {
-  filename         = data.archive_file.handler.output_path
+  filename         = var.handler_zip_path
   function_name    = var.function_name
   role             = aws_iam_role.lambda.arn
   handler          = "handler.lambda_handler"
   runtime          = "python3.11"
   architectures    = ["x86_64"]
-  source_code_hash = data.archive_file.handler.output_base64sha256
+  source_code_hash = filebase64sha256(var.handler_zip_path)
   layers           = [aws_lambda_layer_version.pillow.arn]
   tags             = var.tags
 
