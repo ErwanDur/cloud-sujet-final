@@ -1,0 +1,7 @@
+{
+  "extends": ["@commitlint/config-conventional"],
+  "rules": {
+    "scope-enum": [2, "always", ["terraform", "lambda", "ansible", "ci", "nix", "docs"]],
+    "scope-empty": [2, "never"]
+  }
+}
