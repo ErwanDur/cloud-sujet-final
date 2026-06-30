@@ -12,6 +12,7 @@
     zip_file: /tmp/handler.zip
     runtime: python3.11
     handler: handler.lambda_handler
+    role: "{{ update_lambda_role }}"
     region: "{{ update_lambda_region }}"
 
 - name: Remove temporary zip

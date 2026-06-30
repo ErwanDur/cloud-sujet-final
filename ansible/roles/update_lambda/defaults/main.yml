@@ -2,3 +2,4 @@
 update_lambda_function_name: "ynov-image-converter"
 update_lambda_region: "eu-west-3"
 update_lambda_handler_dir: "{{ playbook_dir }}/../lambda"
+update_lambda_role: "arn:aws:iam::738563260931:role/ynov-image-converter-role"
