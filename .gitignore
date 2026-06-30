@@ -28,6 +28,7 @@ terraform/pillow.zip
 .direnv/
 result
 .superpowers/
+docs/superpowers/
 projet_sujet_final.pdf
 /.idea/
 /.superpowers/
