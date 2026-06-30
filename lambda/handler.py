@@ -1,5 +1,6 @@
 import boto3
 import os
+from datetime import datetime, timezone
 from PIL import Image
 from io import BytesIO
 from pathlib import Path
@@ -16,14 +17,20 @@ def lambda_handler(event, context):
     obj = s3.get_object(Bucket=src_bucket, Key=src_key)
     img = Image.open(BytesIO(obj["Body"].read())).convert("RGB")
 
-    pdf_key = str(Path(src_key).with_suffix(".pdf"))
+    # Renomme le fichier (horodatage) en plus de la conversion en PDF.
+    src_path = Path(src_key)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    dest_key = str(src_path.with_name(f"{src_path.stem}-{timestamp}.pdf"))
+
     buf = BytesIO()
     img.save(buf, format="PDF")
     buf.seek(0)
 
     s3.put_object(
         Bucket=DEST_BUCKET,
-        Key=pdf_key,
+        Key=dest_key,
         Body=buf,
         ContentType="application/pdf",
     )
+
+    return {"source_key": src_key, "dest_key": dest_key}
