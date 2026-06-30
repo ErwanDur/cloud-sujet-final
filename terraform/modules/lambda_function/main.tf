@@ -50,6 +50,8 @@ resource "aws_lambda_function" "this" {
   handler          = "handler.lambda_handler"
   runtime          = "python3.11"
   architectures    = ["x86_64"]
+  timeout          = var.timeout
+  memory_size      = var.memory_size
   source_code_hash = filebase64sha256(var.handler_zip_path)
   layers           = [aws_lambda_layer_version.pillow.arn]
   tags             = var.tags
