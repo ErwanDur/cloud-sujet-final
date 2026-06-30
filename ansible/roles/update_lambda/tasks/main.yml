@@ -1,17 +1,18 @@
 ---
 - name: Package handler.py into a zip
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: "zip /tmp/handler.zip handler.py"
-    chdir: "{{ lambda_handler_dir }}"
+    chdir: "{{ update_lambda_handler_dir }}"
+  changed_when: true
 
 - name: Update Lambda function code
   amazon.aws.lambda:
-    name: "{{ lambda_function_name }}"
+    name: "{{ update_lambda_function_name }}"
     state: present
     zip_file: /tmp/handler.zip
     runtime: python3.11
     handler: handler.lambda_handler
-    region: "{{ lambda_region }}"
+    region: "{{ update_lambda_region }}"
 
 - name: Remove temporary zip
   ansible.builtin.file:
