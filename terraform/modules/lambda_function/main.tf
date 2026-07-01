@@ -14,11 +14,6 @@ resource "aws_iam_role" "lambda" {
   tags               = var.tags
 }
 
-resource "aws_sqs_queue" "dlq" {
-  name                    = "${var.function_name}-dlq"
-  sqs_managed_sse_enabled = true
-}
-
 data "aws_iam_policy_document" "s3_access" {
   statement {
     actions   = ["s3:GetObject"]
@@ -31,10 +26,6 @@ data "aws_iam_policy_document" "s3_access" {
   statement {
     actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
     resources = ["arn:aws:logs:*:*:*"]
-  }
-  statement {
-    actions   = ["sqs:SendMessage"]
-    resources = [aws_sqs_queue.dlq.arn]
   }
 }
 
@@ -70,10 +61,6 @@ resource "aws_lambda_function" "this" {
   source_code_hash               = filebase64sha256(var.handler_zip_path)
   layers                         = [aws_lambda_layer_version.pillow.arn]
   tags                           = var.tags
-
-  dead_letter_config {
-    target_arn = aws_sqs_queue.dlq.arn
-  }
 
   tracing_config {
     mode = "Active"
