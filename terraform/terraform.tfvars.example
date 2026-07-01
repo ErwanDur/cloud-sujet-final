@@ -1,5 +1,19 @@
-aws_region     = "eu-west-3"
-role_arn       = "arn:aws:iam::738563260931:role/role_etudiants"
-project_prefix = "ynov"
+# Exemple de variables Terraform.
+#
+# Toutes les variables ci-dessous ont déjà une valeur par défaut dans variables.tf :
+# ce fichier n'est donc PAS nécessaire pour un déploiement standard.
+# Copiez-le en `terraform.tfvars` uniquement si vous voulez surcharger un défaut
+# (ex. autre région, autre compte AWS, autre préfixe de nommage).
+#
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# `terraform.tfvars` est ignoré par git (voir .gitignore) : n'y mettez jamais de secret.
 
-# trigger
+# Région AWS de déploiement.
+aws_region = "eu-west-3"
+
+# Rôle IAM assumé par le provider (fourni par l'intervenant).
+role_arn = "arn:aws:iam::738563260931:role/role_etudiants"
+
+# Préfixe appliqué aux noms de ressources (buckets, Lambda...).
+project_prefix = "ynov"
