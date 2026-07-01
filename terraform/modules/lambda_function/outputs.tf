@@ -5,3 +5,7 @@ output "function_name" {
 output "function_arn" {
   value = aws_lambda_function.this.arn
 }
+
+output "alias_arn" {
+  value = aws_lambda_alias.production.arn
+}

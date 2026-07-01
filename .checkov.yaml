@@ -1,0 +1,8 @@
+skip-check:
+  - CKV_AWS_18    # S3 access logging: requires a dedicated logging bucket
+  - CKV_AWS_144   # S3 cross-region replication: out of scope
+  - CKV_AWS_145   # S3 KMS encryption: using AES256 instead
+  - CKV2_AWS_62   # S3 event notifications: source bucket has Lambda trigger, dest is write-only
+  - CKV_AWS_173   # Lambda env vars KMS: no custom KMS key in this project
+  - CKV_AWS_272   # Lambda code signing: not used
+  - CKV_AWS_117   # Lambda in VPC: Lambda only accesses S3

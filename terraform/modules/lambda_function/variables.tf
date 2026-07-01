@@ -40,6 +40,11 @@ variable "memory_size" {
   description = "Lambda memory in MB (more memory also means more CPU, speeding up Pillow conversion)"
 }
 
+variable "reserved_concurrent_executions" {
+  type    = number
+  default = 5
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

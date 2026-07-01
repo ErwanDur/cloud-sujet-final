@@ -14,6 +14,11 @@ resource "aws_iam_role" "lambda" {
   tags               = var.tags
 }
 
+resource "aws_sqs_queue" "dlq" {
+  name                    = "${var.function_name}-dlq"
+  sqs_managed_sse_enabled = true
+}
+
 data "aws_iam_policy_document" "s3_access" {
   statement {
     actions   = ["s3:GetObject"]
@@ -27,12 +32,21 @@ data "aws_iam_policy_document" "s3_access" {
     actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
     resources = ["arn:aws:logs:*:*:*"]
   }
+  statement {
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.dlq.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "s3_access" {
   name   = "${var.function_name}-s3"
   role   = aws_iam_role.lambda.id
   policy = data.aws_iam_policy_document.s3_access.json
+}
+
+resource "aws_iam_role_policy_attachment" "xray" {
+  role       = aws_iam_role.lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
 resource "aws_lambda_layer_version" "pillow" {
@@ -44,17 +58,26 @@ resource "aws_lambda_layer_version" "pillow" {
 }
 
 resource "aws_lambda_function" "this" {
-  filename         = var.handler_zip_path
-  function_name    = var.function_name
-  role             = aws_iam_role.lambda.arn
-  handler          = "handler.lambda_handler"
-  runtime          = "python3.11"
-  architectures    = ["x86_64"]
-  timeout          = var.timeout
-  memory_size      = var.memory_size
-  source_code_hash = filebase64sha256(var.handler_zip_path)
-  layers           = [aws_lambda_layer_version.pillow.arn]
-  tags             = var.tags
+  filename                       = var.handler_zip_path
+  function_name                  = var.function_name
+  role                           = aws_iam_role.lambda.arn
+  handler                        = "handler.lambda_handler"
+  runtime                        = "python3.11"
+  architectures                  = ["x86_64"]
+  timeout                        = var.timeout
+  memory_size                    = var.memory_size
+  reserved_concurrent_executions = var.reserved_concurrent_executions
+  source_code_hash               = filebase64sha256(var.handler_zip_path)
+  layers                         = [aws_lambda_layer_version.pillow.arn]
+  tags                           = var.tags
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.dlq.arn
+  }
+
+  tracing_config {
+    mode = "Active"
+  }
 
   environment {
     variables = {
@@ -63,10 +86,21 @@ resource "aws_lambda_function" "this" {
   }
 }
 
+resource "aws_lambda_alias" "production" {
+  name             = "production"
+  function_name    = aws_lambda_function.this.function_name
+  function_version = "$LATEST"
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
+}
+
 resource "aws_lambda_permission" "s3" {
   statement_id  = "AllowS3Invoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.this.function_name
+  qualifier     = aws_lambda_alias.production.name
   principal     = "s3.amazonaws.com"
   source_arn    = var.source_bucket_arn
 }
@@ -75,7 +109,7 @@ resource "aws_s3_bucket_notification" "source" {
   bucket = var.source_bucket_id
 
   lambda_function {
-    lambda_function_arn = aws_lambda_function.this.arn
+    lambda_function_arn = aws_lambda_alias.production.arn
     events              = ["s3:ObjectCreated:*"]
   }
 
