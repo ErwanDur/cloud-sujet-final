@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/ErwanDur/cloud-sujet-final/compare/v1.0.1...v1.0.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* semrel concurency ([b571b41](https://github.com/ErwanDur/cloud-sujet-final/commit/b571b4177a5b82620c2a83823ac7ae39f0e608f2))
+
 ## [1.0.1](https://github.com/ErwanDur/cloud-sujet-final/compare/v1.0.0...v1.0.1) (2026-07-01)
 
 
