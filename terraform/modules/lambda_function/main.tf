@@ -57,8 +57,7 @@ resource "aws_lambda_function" "this" {
   architectures                  = ["x86_64"]
   timeout                        = var.timeout
   memory_size                    = var.memory_size
-  reserved_concurrent_executions = var.reserved_concurrent_executions
-  source_code_hash               = filebase64sha256(var.handler_zip_path)
+  source_code_hash = filebase64sha256(var.handler_zip_path)
   layers                         = [aws_lambda_layer_version.pillow.arn]
   tags                           = var.tags
 
