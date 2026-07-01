@@ -213,6 +213,107 @@ L'`apply` et le déploiement Ansible ne s'exécutent que sur déclenchement manu
 
 ---
 
+## Preuves d'exécution (AWS CLI)
+
+Vérifications réalisées via un **Assume Role** vers `role_etudiants` (profil AWS CLI
+configuré avec `role_arn` + `source_profile`), région `eu-west-3`.
+
+### 1. Identité assumée (Assume Role)
+
+```console
+$ aws sts get-caller-identity
+{
+    "UserId": "AROA2X5ONAIBU4G5D353E:botocore-session-1782889815",
+    "Account": "738563260931",
+    "Arn": "arn:aws:sts::738563260931:assumed-role/role_etudiants/botocore-session-1782889815"
+}
+```
+
+L'ARN confirme que les commandes s'exécutent bien sous le rôle IAM restreint.
+
+### 2. Buckets S3 provisionnés
+
+```console
+$ aws s3 ls | grep ynov-
+2026-06-30 14:53:05 ynov-dest-738563260931
+2026-06-30 14:53:18 ynov-source-738563260931
+```
+
+### 3. Configuration de la Lambda
+
+```console
+$ aws lambda get-function-configuration --function-name ynov-image-converter \
+    --query '{Name:FunctionName,Runtime:Runtime,Handler:Handler,Timeout:Timeout,Memory:MemorySize,Layers:Layers[].Arn,Env:Environment.Variables}'
+{
+    "Name": "ynov-image-converter",
+    "Runtime": "python3.11",
+    "Handler": "handler.lambda_handler",
+    "Timeout": 30,
+    "Memory": 256,
+    "Layers": [
+        "arn:aws:lambda:eu-west-3:738563260931:layer:ynov-image-converter-pillow:2"
+    ],
+    "Env": {
+        "DEST_BUCKET": "ynov-dest-738563260931"
+    }
+}
+```
+
+### 4. Déclencheur S3 → Lambda
+
+```console
+$ aws s3api get-bucket-notification-configuration --bucket ynov-source-738563260931
+{
+    "LambdaFunctionConfigurations": [
+        {
+            "Id": "tf-s3-lambda-20260630125317139000000001",
+            "LambdaFunctionArn": "arn:aws:lambda:eu-west-3:738563260931:function:ynov-image-converter",
+            "Events": [
+                "s3:ObjectCreated:*"
+            ]
+        }
+    ]
+}
+```
+
+### 5. Test de bout en bout : upload d'une image → PDF renommé
+
+```console
+$ aws s3 cp ./facture.png s3://ynov-source-738563260931/facture.png
+upload: ./facture.png to s3://ynov-source-738563260931/facture.png
+
+$ aws s3 ls s3://ynov-dest-738563260931/
+2026-07-01 09:11:58       5292 facture-20260701-071156.pdf
+```
+
+Le fichier a bien été **renommé** (horodatage `AAAAMMJJ-HHMMSS`) **et converti** en PDF.
+
+### 6. Validation du PDF généré
+
+```console
+$ aws s3 cp s3://ynov-dest-738563260931/facture-20260701-071156.pdf ./out.pdf
+$ file ./out.pdf
+./out.pdf: PDF document, version 1.4, 1 page(s)
+```
+
+### 7. Trace d'exécution CloudWatch
+
+```console
+$ aws logs filter-log-events --log-group-name /aws/lambda/ynov-image-converter \
+    --start-time <t> --query 'events[].message' --output text
+START RequestId: f2a30c65-3216-4a92-817e-0b255e41b27e Version: $LATEST
+END RequestId: f2a30c65-3216-4a92-817e-0b255e41b27e
+REPORT RequestId: f2a30c65-3216-4a92-817e-0b255e41b27e Duration: 1891.59 ms \
+  Billed Duration: 2449 ms Memory Size: 256 MB Max Memory Used: 111 MB Init Duration: 556.76 ms
+```
+
+> **Note :** le timeout de la Lambda a été porté de 3 s (défaut) à **30 s** et la mémoire
+> de 128 à **256 MB** (variables `timeout` / `memory_size` du module `lambda_function`).
+> Sous 128 MB / 3 s, la conversion Pillow dépassait le timeout (`Status: timeout`) ;
+> 256 MB apporte aussi plus de CPU, ramenant la durée à ~1,9 s.
+
+---
+
 ## Technologies
 
 | Outil | Rôle |
