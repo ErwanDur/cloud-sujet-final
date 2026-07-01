@@ -49,17 +49,17 @@ resource "aws_lambda_layer_version" "pillow" {
 }
 
 resource "aws_lambda_function" "this" {
-  filename                       = var.handler_zip_path
-  function_name                  = var.function_name
-  role                           = aws_iam_role.lambda.arn
-  handler                        = "handler.lambda_handler"
-  runtime                        = "python3.11"
-  architectures                  = ["x86_64"]
-  timeout                        = var.timeout
-  memory_size                    = var.memory_size
+  filename         = var.handler_zip_path
+  function_name    = var.function_name
+  role             = aws_iam_role.lambda.arn
+  handler          = "handler.lambda_handler"
+  runtime          = "python3.11"
+  architectures    = ["x86_64"]
+  timeout          = var.timeout
+  memory_size      = var.memory_size
   source_code_hash = filebase64sha256(var.handler_zip_path)
-  layers                         = [aws_lambda_layer_version.pillow.arn]
-  tags                           = var.tags
+  layers           = [aws_lambda_layer_version.pillow.arn]
+  tags             = var.tags
 
   tracing_config {
     mode = "Active"
