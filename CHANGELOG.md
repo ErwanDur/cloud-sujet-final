@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/ErwanDur/cloud-sujet-final/compare/v1.0.0...v1.0.1) (2026-07-01)
+
+
+### Bug Fixes
+
+* semrel errors ([9e7f744](https://github.com/ErwanDur/cloud-sujet-final/commit/9e7f744c78a446054dca7c2257879e5e980d140c))
+
 # 1.0.0 (2026-07-01)
 
 
